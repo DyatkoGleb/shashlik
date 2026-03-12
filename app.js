@@ -228,17 +228,13 @@ function initMapIfNeeded() {
     apiKey: YANDEX_MAPS_API_KEY,
     center: [VOLGOGRAD.lat, VOLGOGRAD.lon],
     zoom: 10,
-    onMapClick: async function (coords) {
+    onMapClick: function (coords) {
       if (!tripId) return;
-      var description = window.prompt('Описание метки (необязательно):', '') || '';
-      var id = await saveMarker(tripId, coords[0], coords[1], description);
-      if (id) {
-        var balloon = description.trim() || 'Метка ' + coords[0].toFixed(5) + ', ' + coords[1].toFixed(5);
-        window.YandexMap.addMarker(coords, {
-          id: id,
-          balloonContent: balloon
-        });
-      }
+      var draftId = 'draft_' + Date.now();
+      window.YandexMap.addMarker(coords, {
+        id: draftId,
+        balloonContent: 'Введите описание ниже и нажмите ✓'
+      });
     },
     onMarkersChange: renderMapMarkersList,
     onReady: function () {
@@ -268,11 +264,41 @@ function renderMapMarkersList() {
     listEl.innerHTML = '<li class="no-data">Нет меток. Кликни по карте выше.</li>';
     return;
   }
-  listEl.innerHTML = markers.map(function (m) {
-    var desc = (m.balloonContent && m.balloonContent.trim()) ? escapeHtml(m.balloonContent) : (m.coords[0].toFixed(5) + ', ' + m.coords[1].toFixed(5));
-    return '<li><span class="map-marker-desc">' + desc + '</span> <button type="button" class="btn-remove" data-marker-id="' + escapeHtml(m.id) + '" title="Удалить">×</button></li>';
-  }).join('');
   var tripId = getTripId();
+  listEl.innerHTML = markers.map(function (m) {
+    var isDraft = m.id.indexOf('draft_') === 0;
+    var lat = m.coords[0];
+    var lon = m.coords[1];
+    var coordsStr = lat.toFixed(5) + ', ' + lon.toFixed(5);
+    if (isDraft) {
+      return '<li class="map-marker-row map-marker-row--draft" data-marker-id="' + escapeHtml(m.id) + '" data-lat="' + lat + '" data-lon="' + lon + '">' +
+        '<span class="map-marker-coords">' + escapeHtml(coordsStr) + '</span> ' +
+        '<input type="text" class="map-marker-input" placeholder="Описание" maxlength="200" /> ' +
+        '<button type="button" class="btn-save" title="Сохранить в базу">✓</button></li>';
+    }
+    var desc = (m.balloonContent && m.balloonContent.trim()) ? escapeHtml(m.balloonContent) : coordsStr;
+    return '<li class="map-marker-row"><span class="map-marker-desc">' + desc + '</span> ' +
+      '<button type="button" class="btn-remove" data-marker-id="' + escapeHtml(m.id) + '" title="Удалить">×</button></li>';
+  }).join('');
+
+  listEl.querySelectorAll('.btn-save').forEach(function (btn) {
+    btn.addEventListener('click', async function (e) {
+      e.preventDefault();
+      var li = btn.closest('li');
+      var draftId = li.getAttribute('data-marker-id');
+      var lat = parseFloat(li.getAttribute('data-lat'), 10);
+      var lon = parseFloat(li.getAttribute('data-lon'), 10);
+      var input = li.querySelector('.map-marker-input');
+      var description = input ? input.value.trim() : '';
+      var id = await saveMarker(tripId, lat, lon, description);
+      if (id) {
+        window.YandexMap.removeMarker(draftId);
+        var balloon = description || ('Метка ' + lat.toFixed(5) + ', ' + lon.toFixed(5));
+        window.YandexMap.addMarker([lat, lon], { id: id, balloonContent: balloon });
+      }
+    });
+  });
+
   listEl.querySelectorAll('.btn-remove').forEach(function (btn) {
     btn.addEventListener('click', async function (e) {
       e.preventDefault();

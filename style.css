@@ -216,13 +216,66 @@ body {
   margin: 0.5rem 0 0;
 }
 
-.map-markers-list li {
+.map-marker-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
   padding: 0.35rem 0;
   border-bottom: 1px solid var(--border);
   font-size: 0.85rem;
+}
+
+.map-marker-row:last-child {
+  border-bottom: none;
+}
+
+.map-marker-row .map-marker-desc,
+.map-marker-row .map-marker-coords {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.map-marker-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.map-marker-input::placeholder {
+  color: var(--text-muted);
+}
+
+.map-marker-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.btn-save {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: var(--green);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+}
+
+.btn-save:hover {
+  opacity: 0.9;
 }
 
 .map-markers-list li:last-child {
@@ -545,11 +598,14 @@ input[type="text"]:focus {
   padding: 0;
   border: none;
   border-radius: 6px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   color: var(--text-muted);
   font-size: 1.25rem;
-  line-height: 1;
-  cursor: pointer;
   transition: color 0.15s, background 0.15s;
 }
 
