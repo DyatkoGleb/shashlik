@@ -147,8 +147,18 @@ async function loadParticipants(tripId) {
 }
 
 async function deleteParticipant(tripId, participantId) {
-  if (!supabaseClient || !tripId || !participantId) return;
-  await supabaseClient.from('participants').delete().eq('id', participantId);
+  if (!supabaseClient || !tripId || !participantId) return false;
+  var res = await supabaseClient
+    .from('participants')
+    .delete()
+    .eq('id', participantId)
+    .eq('trip_id', tripId)
+    .select('id');
+  if (res.error) {
+    console.warn('deleteParticipant error:', res.error);
+    return false;
+  }
+  return (res.data && res.data.length) > 0;
 }
 
 async function saveParticipant(tripId, name, indices) {
@@ -191,8 +201,12 @@ function renderParticipantsList(participants) {
   ul.querySelectorAll('.btn-remove').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
-      await deleteParticipant(tripId, btn.getAttribute('data-id'));
-      await refreshTrip();
+      var id = btn.getAttribute('data-id');
+      if (!id) return;
+      var deleted = await deleteParticipant(tripId, id);
+      if (deleted) {
+        try { await refreshTrip(); } catch (err) { console.warn('refreshTrip after delete:', err); }
+      }
     });
   });
 }
@@ -327,7 +341,10 @@ function calculateBest(people) {
     count: 0
   }));
   byWeekend.forEach(w => { w.count = w.names.length; });
-  byWeekend.sort((a, b) => b.count - a.count);
+  byWeekend.sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return b.index - a.index; // при равном числе участников — позже дата выше
+  });
   return byWeekend;
 }
 
