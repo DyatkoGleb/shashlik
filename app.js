@@ -1,6 +1,14 @@
-// Настрой Supabase: создай проект на supabase.com, вставь сюда URL и anon key
-const SUPABASE_URL = '';
+// Настрой Supabase: создай проект на supabase.com, вставь сюда URL и anon key (Settings → API)
+const SUPABASE_URL = 'https://mtyazmihdcskgxuqobyr.supabase.co';
 const SUPABASE_ANON_KEY = '';
+
+let supabaseClient = null;
+(function () {
+  var lib = typeof supabase !== 'undefined' ? supabase : (typeof window !== 'undefined' && window.supabase ? window.supabase : null);
+  if (lib && typeof lib.createClient === 'function' && SUPABASE_URL && SUPABASE_ANON_KEY) {
+    supabaseClient = lib.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
+  }
+})();
 
 const WEEKENDS = [
   '18–19 апреля',
@@ -34,11 +42,6 @@ function getWeekendDatesForArchive() {
     { start: `${y}-05-16`, end: `${y}-05-17` },
     { start: `${y}-05-23`, end: `${y}-05-24` }
   ];
-}
-
-let supabaseClient = null;
-if (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) {
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
 function getTripId() {
@@ -116,16 +119,12 @@ function setSelectedIndices(indices) {
 
 async function createTrip() {
   if (!supabaseClient) {
-    setTripId('local');
-    showTripScreen([]);
-    document.getElementById('trip-url').value = location.href;
+    alert('Настрой Supabase: укажи SUPABASE_URL и SUPABASE_ANON_KEY в app.js');
     return;
   }
   const { data, error } = await supabaseClient.from('trips').insert({}).select('id').single();
   if (error) {
-    setTripId('local');
-    showTripScreen([]);
-    document.getElementById('trip-url').value = location.href;
+    alert('Не удалось создать поездку: ' + (error.message || JSON.stringify(error)));
     return;
   }
   setTripId(data.id);
@@ -134,12 +133,9 @@ async function createTrip() {
 }
 
 async function loadParticipants(tripId) {
-  if (tripId === 'local') {
-    const raw = localStorage.getItem('trip_local_participants');
-    return raw ? JSON.parse(raw) : [];
-  }
-  if (!supabaseClient) return [];
-  const { data } = await supabaseClient.from('participants').select('id, name, weekends').eq('trip_id', tripId);
+  if (!supabaseClient || !tripId) return [];
+  const { data, error } = await supabaseClient.from('participants').select('id, name, weekends').eq('trip_id', tripId);
+  if (error) return [];
   return (data || []).map(r => ({
     id: r.id,
     name: r.name,
@@ -147,28 +143,13 @@ async function loadParticipants(tripId) {
   }));
 }
 
-async function deleteParticipant(tripId, participantIdOrIndex) {
-  if (tripId === 'local') {
-    const list = await loadParticipants('local');
-    const index = typeof participantIdOrIndex === 'number' ? participantIdOrIndex : -1;
-    if (index >= 0 && index < list.length) {
-      list.splice(index, 1);
-      localStorage.setItem('trip_local_participants', JSON.stringify(list));
-    }
-    return;
-  }
-  if (supabaseClient && typeof participantIdOrIndex === 'string') {
-    await supabaseClient.from('participants').delete().eq('id', participantIdOrIndex);
-  }
+async function deleteParticipant(tripId, participantId) {
+  if (!supabaseClient || !tripId || !participantId) return;
+  await supabaseClient.from('participants').delete().eq('id', participantId);
 }
 
 async function saveParticipant(tripId, name, indices) {
-  if (tripId === 'local') {
-    const list = await loadParticipants('local');
-    list.push({ name, indices });
-    localStorage.setItem('trip_local_participants', JSON.stringify(list));
-    return;
-  }
+  if (!supabaseClient || !tripId) return;
   await supabaseClient.from('participants').insert({ trip_id: tripId, name, weekends: indices.join(',') });
 }
 
@@ -194,20 +175,17 @@ function renderParticipantsList(participants) {
     ul.innerHTML = '<li class="no-data">Пока никого. Добавь себя первым.</li>';
     return;
   }
-  ul.innerHTML = participants.map((p, i) => {
-    const deleteAttr = p.id ? `data-id="${p.id}"` : `data-index="${i}"`;
-    return `<li>
+  ul.innerHTML = participants.map((p) => `
+    <li>
       <span class="participant-info"><span class="participant-name">${escapeHtml(p.name)}</span> <span class="participant-dates">${p.indices.map(idx => WEEKENDS[idx]).join(', ')}</span></span>
-      <button type="button" class="btn-remove" ${deleteAttr} title="Удалить" aria-label="Удалить">×</button>
-    </li>`;
-  }).join('');
+      <button type="button" class="btn-remove" data-id="${p.id}" title="Удалить" aria-label="Удалить">×</button>
+    </li>
+  `).join('');
 
   ul.querySelectorAll('.btn-remove').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
-      const id = btn.getAttribute('data-id');
-      const index = btn.getAttribute('data-index');
-      await deleteParticipant(tripId, id != null && id !== '' ? id : parseInt(index, 10));
+      await deleteParticipant(tripId, btn.getAttribute('data-id'));
       await refreshTrip();
     });
   });
@@ -302,6 +280,7 @@ document.getElementById('btn-add-me').addEventListener('click', async () => {
   if (!name) { alert('Напиши имя'); return; }
   if (indices.length === 0) { alert('Выбери хотя бы одни выходные'); return; }
   const tripId = getTripId();
+  if (!tripId) { alert('Сначала открой ссылку на поездку'); return; }
   await saveParticipant(tripId, name, indices);
   document.getElementById('name').value = '';
   setSelectedIndices([]);
