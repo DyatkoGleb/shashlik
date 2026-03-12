@@ -44,6 +44,25 @@ create policy "trips insert" on public.trips for insert to anon with check (true
 create policy "participants read" on public.participants for select to anon using (true);
 create policy "participants insert" on public.participants for insert to anon with check (true);
 create policy "participants delete" on public.participants for delete to anon using (true);
+
+-- Метки на карте (привязаны к поездке)
+create table if not exists public.markers (
+  id uuid primary key default gen_random_uuid(),
+  trip_id uuid not null references public.trips(id) on delete cascade,
+  lat double precision not null,
+  lon double precision not null,
+  description text,
+  created_at timestamptz default now()
+);
+
+-- Если таблица markers уже была создана без description:
+-- alter table public.markers add column if not exists description text;
+
+alter table public.markers enable row level security;
+
+create policy "markers read" on public.markers for select to anon using (true);
+create policy "markers insert" on public.markers for insert to anon with check (true);
+create policy "markers delete" on public.markers for delete to anon using (true);
 ```
 
 3. В разделе **Settings → API** скопируй **Project URL** и **anon public** key.

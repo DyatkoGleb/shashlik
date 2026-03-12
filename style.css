@@ -229,9 +229,18 @@ body {
   border-bottom: none;
 }
 
-.map-marker-coords {
+.map-marker-coords,
+.map-marker-desc {
   color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.map-marker-coords {
   font-family: ui-monospace, monospace;
+}
+
+.map-marker-desc {
+  word-break: break-word;
 }
 
 .results-title {

@@ -164,6 +164,7 @@ function showTripScreen(participants) {
   renderParticipantsList(participants);
   renderBestResults(participants);
   initMapIfNeeded();
+  loadMarkersAndDisplay(getTripId());
   renderMapMarkersList();
 }
 
@@ -196,22 +197,66 @@ function renderParticipantsList(participants) {
   });
 }
 
+async function loadMarkers(tripId) {
+  if (!supabaseClient || !tripId) return [];
+  var res = await supabaseClient.from('markers').select('id, lat, lon, description').eq('trip_id', tripId);
+  if (res.error) return [];
+  return res.data || [];
+}
+
+async function saveMarker(tripId, lat, lon, description) {
+  if (!supabaseClient || !tripId) return null;
+  var row = { trip_id: tripId, lat: lat, lon: lon };
+  if (description != null && String(description).trim() !== '') row.description = String(description).trim();
+  var res = await supabaseClient.from('markers').insert(row).select('id').single();
+  return res.error ? null : res.data.id;
+}
+
+async function deleteMarkerFromDb(tripId, markerId) {
+  if (!supabaseClient || !tripId || !markerId) return;
+  await supabaseClient.from('markers').delete().eq('id', markerId).eq('trip_id', tripId);
+}
+
 function initMapIfNeeded() {
   if (!window.YandexMap || !YANDEX_MAPS_API_KEY) return;
   if (window._tripMapInited) return;
   var container = document.getElementById('trip-map');
   if (!container) return;
   window._tripMapInited = true;
+  var tripId = getTripId();
   window.YandexMap.init('trip-map', {
     apiKey: YANDEX_MAPS_API_KEY,
     center: [VOLGOGRAD.lat, VOLGOGRAD.lon],
     zoom: 10,
-    onMapClick: function (coords) {
-      window.YandexMap.addMarker(coords, {
-        balloonContent: 'Метка ' + coords[0].toFixed(5) + ', ' + coords[1].toFixed(5)
-      });
+    onMapClick: async function (coords) {
+      if (!tripId) return;
+      var description = window.prompt('Описание метки (необязательно):', '') || '';
+      var id = await saveMarker(tripId, coords[0], coords[1], description);
+      if (id) {
+        var balloon = description.trim() || 'Метка ' + coords[0].toFixed(5) + ', ' + coords[1].toFixed(5);
+        window.YandexMap.addMarker(coords, {
+          id: id,
+          balloonContent: balloon
+        });
+      }
     },
-    onMarkersChange: renderMapMarkersList
+    onMarkersChange: renderMapMarkersList,
+    onReady: function () {
+      loadMarkersAndDisplay(getTripId());
+    }
+  });
+}
+
+async function loadMarkersAndDisplay(tripId) {
+  if (!window.YandexMap) return;
+  var markers = await loadMarkers(tripId);
+  window.YandexMap.removeAllMarkers();
+  markers.forEach(function (m) {
+    var balloon = (m.description && m.description.trim()) ? m.description.trim() : 'Метка ' + m.lat.toFixed(5) + ', ' + m.lon.toFixed(5);
+    window.YandexMap.addMarker([m.lat, m.lon], {
+      id: m.id,
+      balloonContent: balloon
+    });
   });
 }
 
@@ -224,13 +269,16 @@ function renderMapMarkersList() {
     return;
   }
   listEl.innerHTML = markers.map(function (m) {
-    var label = m.coords[0].toFixed(5) + ', ' + m.coords[1].toFixed(5);
-    return '<li><span class="map-marker-coords">' + escapeHtml(label) + '</span> <button type="button" class="btn-remove" data-marker-id="' + escapeHtml(m.id) + '" title="Удалить">×</button></li>';
+    var desc = (m.balloonContent && m.balloonContent.trim()) ? escapeHtml(m.balloonContent) : (m.coords[0].toFixed(5) + ', ' + m.coords[1].toFixed(5));
+    return '<li><span class="map-marker-desc">' + desc + '</span> <button type="button" class="btn-remove" data-marker-id="' + escapeHtml(m.id) + '" title="Удалить">×</button></li>';
   }).join('');
+  var tripId = getTripId();
   listEl.querySelectorAll('.btn-remove').forEach(function (btn) {
-    btn.addEventListener('click', function (e) {
+    btn.addEventListener('click', async function (e) {
       e.preventDefault();
-      window.YandexMap.removeMarker(btn.getAttribute('data-marker-id'));
+      var id = btn.getAttribute('data-marker-id');
+      await deleteMarkerFromDb(tripId, id);
+      window.YandexMap.removeMarker(id);
     });
   });
 }

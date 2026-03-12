@@ -73,16 +73,20 @@
    */
   function init(containerId, options) {
     var opts = options || {};
+    function done() {
+      createMap(containerId, opts);
+      if (opts.onReady && typeof opts.onReady === 'function') opts.onReady();
+    }
     if (opts.apiKey) {
       loadScript(opts.apiKey, function (err) {
         if (err) {
           console.warn('YandexMap init error:', err);
           return;
         }
-        createMap(containerId, opts);
+        done();
       });
     } else {
-      createMap(containerId, opts);
+      done();
     }
   }
 
