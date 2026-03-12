@@ -245,6 +245,7 @@ h1 {
 }
 
 .map-marker-row:hover {
+  background: var(--surface2);
   border-color: var(--text-muted);
 }
 
@@ -339,28 +340,7 @@ h1 {
   margin-top: 1rem;
 }
 
-.weekends-select-all {
-  margin-bottom: 0.35rem;
-  cursor: pointer;
-  padding: 0.35rem 0.6rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.weekends-select-all:hover {
-  background: var(--surface2);
-  border-color: var(--text-muted);
-}
-
-.select-all-row {
-  margin-bottom: 0;
-  display: block;
-  cursor: pointer;
-}
-
-.select-all-row.weekend span {
+.weekend-select-all span {
   font-size: 0.85rem;
   color: var(--text-muted);
 }

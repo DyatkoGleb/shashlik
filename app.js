@@ -41,9 +41,25 @@ function setTripId(id) {
   history.replaceState({}, '', url);
 }
 
+function getWeekendCheckboxes(container) {
+  return container ? container.querySelectorAll('input[type="checkbox"][value]') : [];
+}
+
 function renderWeekends(containerId) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
+
+  var selectAllRow = document.createElement('div');
+  selectAllRow.className = 'weekend weekend-select-all';
+  selectAllRow.innerHTML = '<input type="checkbox" id="select-all-weekends" /><span>Выбрать всё</span>';
+  selectAllRow.addEventListener('click', function (e) {
+    if (e.target.type === 'checkbox') return;
+    e.preventDefault();
+    var cb = document.getElementById('select-all-weekends');
+    if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change', { bubbles: true })); }
+  });
+  container.appendChild(selectAllRow);
+
   WEEKENDS.forEach((label, i) => {
     const div = document.createElement('div');
     div.className = 'weekend';
@@ -63,33 +79,25 @@ function renderWeekends(containerId) {
     container.appendChild(div);
   });
 
-  const selectAll = document.getElementById('select-all-weekends');
+  var selectAll = document.getElementById('select-all-weekends');
   if (selectAll) {
-    selectAll.addEventListener('change', () => {
-      const checkboxes = document.querySelectorAll('#weekends-me input[type="checkbox"]');
-      const checked = selectAll.checked;
-      checkboxes.forEach(cb => {
+    selectAll.addEventListener('change', function () {
+      var checkboxes = getWeekendCheckboxes(container);
+      var checked = selectAll.checked;
+      checkboxes.forEach(function (cb) {
         cb.checked = checked;
-        const row = cb.closest('.weekend');
+        var row = cb.closest('.weekend');
         if (row) row.classList.toggle('selected', checked);
       });
     });
-    var selectAllBlock = document.querySelector('.weekends-select-all');
-    if (selectAllBlock) {
-      selectAllBlock.addEventListener('click', function (e) {
-        if (e.target.type === 'checkbox') return;
-        e.preventDefault();
-        selectAll.checked = !selectAll.checked;
-        selectAll.dispatchEvent(new Event('change', { bubbles: true }));
-      });
-    }
   }
 }
 
 function updateSelectAllState() {
   const selectAll = document.getElementById('select-all-weekends');
   if (!selectAll) return;
-  const checkboxes = document.querySelectorAll('#weekends-me input[type="checkbox"]');
+  const container = document.getElementById('weekends-me');
+  const checkboxes = getWeekendCheckboxes(container);
   const total = checkboxes.length;
   const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
   selectAll.checked = total > 0 && checked === total;
@@ -97,15 +105,17 @@ function updateSelectAllState() {
 }
 
 function getSelectedIndices() {
-  return Array.from(document.querySelectorAll('#weekends-me input:checked'))
-    .map(cb => parseInt(cb.value, 10))
-    .sort((a, b) => a - b);
+  const container = document.getElementById('weekends-me');
+  const checkboxes = getWeekendCheckboxes(container);
+  return Array.from(checkboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value, 10)).sort((a, b) => a - b);
 }
 
 function setSelectedIndices(indices) {
-  document.querySelectorAll('#weekends-me input').forEach(cb => {
+  const container = document.getElementById('weekends-me');
+  getWeekendCheckboxes(container).forEach(cb => {
     cb.checked = indices.includes(parseInt(cb.value, 10));
-    cb.closest('.weekend').classList.toggle('selected', cb.checked);
+    var row = cb.closest('.weekend');
+    if (row) row.classList.toggle('selected', cb.checked);
   });
   updateSelectAllState();
 }
