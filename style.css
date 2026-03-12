@@ -28,6 +28,10 @@ body {
   overflow-x: hidden;
 }
 
+h1 {
+  margin-bottom: 20px;
+}
+
 .container {
   max-width: 900px;
   margin: 0 auto;
@@ -49,7 +53,7 @@ body {
 }
 
 .trip-results-wrap {
-  flex: 0 1 320px;
+  flex: 0 1 330px;
   /* position: sticky; */
   top: 0.75rem;
   background: var(--surface2);
@@ -75,7 +79,7 @@ body {
   }
 
   .trip-map-container {
-    height: 220px;
+    height: 300px;
   }
 }
 
@@ -167,7 +171,7 @@ body {
   }
 
   .trip-map-container {
-    height: 200px;
+    height: 260px;
   }
 
   .map-markers-list li {
@@ -203,7 +207,7 @@ body {
 
 .trip-map-container {
   width: 100%;
-  height: 200px;
+  height: 320px;
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--border);
@@ -213,20 +217,40 @@ body {
 .map-markers-list {
   list-style: none;
   padding: 0;
-  margin: 0.5rem 0 0;
+  margin: 0.75rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.map-markers-list .no-data {
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
 .map-marker-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.35rem 0;
-  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
   font-size: 0.85rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.map-marker-row:hover {
+  border-color: var(--text-muted);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .map-marker-row:last-child {
-  border-bottom: none;
+  border-bottom: 1px solid var(--border);
 }
 
 .map-marker-row .map-marker-desc,
@@ -278,10 +302,6 @@ body {
   opacity: 0.9;
 }
 
-.map-markers-list li:last-child {
-  border-bottom: none;
-}
-
 .map-marker-coords,
 .map-marker-desc {
   color: var(--text-muted);
@@ -311,10 +331,23 @@ body {
 
 .weekends-select-all {
   margin-bottom: 0.35rem;
+  cursor: pointer;
+  padding: 0.35rem 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.weekends-select-all:hover {
+  background: var(--surface2);
+  border-color: var(--text-muted);
 }
 
 .select-all-row {
   margin-bottom: 0;
+  display: block;
+  cursor: pointer;
 }
 
 .select-all-row.weekend span {
@@ -561,8 +594,11 @@ input[type="text"]:focus {
 
 .participants-list {
   list-style: none;
-  padding: 0;
+  padding: 0.5rem 0.75rem;
   margin: 0 0 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
 }
 
 .participants-list li {

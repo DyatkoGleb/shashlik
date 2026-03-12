@@ -91,8 +91,15 @@ function renderWeekends(containerId) {
         if (row) row.classList.toggle('selected', checked);
       });
     });
-    const selectAllRow = selectAll.closest('.weekend');
-    if (selectAllRow) selectAllRow.addEventListener('click', (e) => { if (e.target.type !== 'checkbox') selectAll.click(); });
+    var selectAllBlock = document.querySelector('.weekends-select-all');
+    if (selectAllBlock) {
+      selectAllBlock.addEventListener('click', function (e) {
+        if (e.target.type === 'checkbox') return;
+        e.preventDefault();
+        selectAll.checked = !selectAll.checked;
+        selectAll.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
   }
 }
 
@@ -178,6 +185,22 @@ function showTripScreen(participants) {
   renderMapMarkersList();
 }
 
+function formatParticipantDates(indices) {
+  if (!indices.length) return '';
+  var labels = indices.map(function (idx) { return WEEKENDS[idx] || ''; }).filter(Boolean);
+  var byMonth = {};
+  labels.forEach(function (label) {
+    var lastSpace = label.lastIndexOf(' ');
+    var dayPart = lastSpace >= 0 ? label.slice(0, lastSpace) : label;
+    var month = lastSpace >= 0 ? label.slice(lastSpace + 1) : '';
+    if (!byMonth[month]) byMonth[month] = [];
+    byMonth[month].push(dayPart);
+  });
+  return Object.keys(byMonth).map(function (month) {
+    return byMonth[month].join(', ') + ' ' + month;
+  }).join(', ');
+}
+
 function updateTripLinkVisibility(participantCount) {
   const wrap = document.querySelector('.trip-link-wrap');
   if (wrap) wrap.classList.toggle('hidden', participantCount > 0);
@@ -193,7 +216,7 @@ function renderParticipantsList(participants) {
   }
   ul.innerHTML = participants.map((p) => `
     <li>
-      <span class="participant-info"><span class="participant-name">${escapeHtml(p.name)}</span> <span class="participant-dates">${p.indices.map(idx => WEEKENDS[idx]).join(', ')}</span></span>
+      <span class="participant-info"><span class="participant-name">${escapeHtml(p.name)}</span> <span class="participant-dates">${escapeHtml(formatParticipantDates(p.indices))}</span></span>
       <button type="button" class="btn-remove" data-id="${p.id}" title="Удалить" aria-label="Удалить">×</button>
     </li>
   `).join('');
