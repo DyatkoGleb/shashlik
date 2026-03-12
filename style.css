@@ -60,7 +60,6 @@ body {
 
 @media (max-width: 740px) {
   .trip-results-wrap {
-    order: -1;
     position: static;
     flex: 1 1 100%;
   }
