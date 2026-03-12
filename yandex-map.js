@@ -140,6 +140,19 @@
   }
 
   /**
+   * Приблизить карту к метке и открыть её балун.
+   * @param {string} id - id метки
+   * @param {number} [zoomLevel=15] - уровень зума (больше = ближе)
+   */
+  function focusMarker(id, zoomLevel) {
+    var rec = placemarksById[id];
+    if (!rec || !map) return;
+    var z = zoomLevel != null ? zoomLevel : 15;
+    map.setCenter(rec.coords, z, { duration: 300 });
+    rec.placemark.balloon.open();
+  }
+
+  /**
    * Удалить все метки.
    */
   function removeAllMarkers() {
@@ -188,6 +201,7 @@
     removeMarker: removeMarker,
     removeAllMarkers: removeAllMarkers,
     getMarkers: getMarkers,
+    focusMarker: focusMarker,
     destroy: destroy
   };
 })(typeof window !== 'undefined' ? window : this);

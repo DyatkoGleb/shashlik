@@ -1,9 +1,10 @@
-// Настрой Supabase: создай проект на supabase.com, вставь сюда URL и anon key (Settings → API)
-const SUPABASE_URL = 'https://mtyazmihdcskgxuqobyr.supabase.co';
-const SUPABASE_ANON_KEY = ''; // anon public key (JWT, начинается с eyJ)
-
-// Ключ Яндекс.Карт: developer.tech.yandex.ru → JavaScript API и HTTP Геокодер. Без ключа карта не загрузится.
-const YANDEX_MAPS_API_KEY = '2b869f46-c097-4f90-8aa0-6ecca1cfb1cc';
+// Константы подключаются из config.js
+var SUPABASE_URL = typeof window !== 'undefined' && window.SUPABASE_URL ? window.SUPABASE_URL : '';
+var SUPABASE_ANON_KEY = typeof window !== 'undefined' && window.SUPABASE_ANON_KEY ? window.SUPABASE_ANON_KEY : '';
+var YANDEX_MAPS_API_KEY = typeof window !== 'undefined' && window.YANDEX_MAPS_API_KEY ? window.YANDEX_MAPS_API_KEY : '';
+var WEEKENDS = typeof window !== 'undefined' && window.WEEKENDS ? window.WEEKENDS : [];
+var VOLGOGRAD = typeof window !== 'undefined' && window.VOLGOGRAD ? window.VOLGOGRAD : { lat: 48.708, lon: 44.513 };
+var WMO_WEATHER = typeof window !== 'undefined' && window.WMO_WEATHER ? window.WMO_WEATHER : {};
 
 let supabaseClient = null;
 (function () {
@@ -12,24 +13,6 @@ let supabaseClient = null;
     supabaseClient = lib.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
   }
 })();
-
-const WEEKENDS = [
-  '18–19 апреля',
-  '25–26 апреля',
-  '2–3 мая',
-  '9–10 мая',
-  '16–17 мая',
-  '23–24 мая'
-];
-
-const VOLGOGRAD = { lat: 48.708, lon: 44.513 };
-
-const WMO_WEATHER = {
-  0: 'ясно', 1: 'преим. ясно', 2: 'переменная облачность', 3: 'пасмурно',
-  45: 'туман', 48: 'изморозь', 51: 'морось', 53: 'морось', 55: 'морось',
-  61: 'дождь', 63: 'дождь', 65: 'сильный дождь', 71: 'снег', 73: 'снег', 75: 'снег',
-  80: 'ливень', 81: 'ливень', 82: 'ливень', 95: 'гроза', 96: 'гроза с градом', 99: 'гроза с градом'
-};
 
 function weatherDesc(code) {
   return WMO_WEATHER[code] || 'разная';
@@ -129,7 +112,7 @@ function setSelectedIndices(indices) {
 
 async function createTrip() {
   if (!supabaseClient) {
-    alert('Настрой Supabase: укажи SUPABASE_URL и SUPABASE_ANON_KEY в app.js');
+    alert('Настрой Supabase: укажи SUPABASE_URL и SUPABASE_ANON_KEY в config.js');
     return;
   }
   const { data, error } = await supabaseClient.from('trips').insert({}).select('id').single();
@@ -314,9 +297,25 @@ function renderMapMarkersList() {
         '<button type="button" class="btn-save" title="Сохранить в базу">✓</button></li>';
     }
     var desc = (m.balloonContent && m.balloonContent.trim()) ? escapeHtml(m.balloonContent) : coordsStr;
-    return '<li class="map-marker-row"><span class="map-marker-desc">' + desc + '</span> ' +
+    return '<li class="map-marker-row map-marker-row--clickable" data-marker-id="' + escapeHtml(m.id) + '" title="Показать на карте">' +
+      '<span class="map-marker-desc">' + desc + '</span> ' +
       '<button type="button" class="btn-remove" data-marker-id="' + escapeHtml(m.id) + '" title="Удалить">×</button></li>';
   }).join('');
+
+  listEl.querySelectorAll('.map-marker-row--clickable').forEach(function (row) {
+    row.addEventListener('click', function (e) {
+      if (e.target.closest('button')) return;
+      var id = row.getAttribute('data-marker-id');
+      if (id && window.YandexMap && window.YandexMap.focusMarker) window.YandexMap.focusMarker(id);
+    });
+  });
+  listEl.querySelectorAll('.map-marker-row--draft').forEach(function (row) {
+    row.addEventListener('click', function (e) {
+      if (e.target.closest('button') || e.target.closest('input')) return;
+      var id = row.getAttribute('data-marker-id');
+      if (id && window.YandexMap && window.YandexMap.focusMarker) window.YandexMap.focusMarker(id);
+    });
+  });
 
   listEl.querySelectorAll('.btn-save').forEach(function (btn) {
     btn.addEventListener('click', async function (e) {

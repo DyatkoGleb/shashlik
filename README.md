@@ -66,7 +66,7 @@ create policy "markers delete" on public.markers for delete to anon using (true)
 ```
 
 3. В разделе **Settings → API** скопируй **Project URL** и **anon public** key.
-4. В `app.js` в начале файла подставь **Project URL** и **anon** key в константы `SUPABASE_URL` и `SUPABASE_ANON_KEY`.
+4. В файле `config.js` подставь **Project URL** и **anon** key в константы `SUPABASE_URL` и `SUPABASE_ANON_KEY`. Там же при необходимости укажи `YANDEX_MAPS_API_KEY` для карты.
 
 После этого «Создать поездку» будет сохранять поездку в Supabase, ссылка станет общей, а участники — общими для всех, кто её откроет.
 

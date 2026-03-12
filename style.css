@@ -246,7 +246,11 @@ h1 {
 
 .map-marker-row:hover {
   border-color: var(--text-muted);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.map-marker-row--clickable,
+.map-marker-row--draft {
+  cursor: pointer;
 }
 
 .map-marker-row:last-child {
@@ -255,8 +259,14 @@ h1 {
 
 .map-marker-row .map-marker-desc,
 .map-marker-row .map-marker-coords {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   min-width: 0;
+}
+
+.map-marker-row .btn-remove,
+.map-marker-row .btn-save {
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .map-marker-input {
