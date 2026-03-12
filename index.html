@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Шашлык 2026 v.1.0.0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Шашлык 2026 v.1.0.0</h1>
+
+    <div id="screen-no-trip" class="create-trip-wrap">
+      <p class="no-data">Создай поездку — получишь ссылку. Отправь её в чат, мужики откроют и добавят свои даты.</p>
+      <button type="button" class="btn btn-primary" id="create-trip">Создать поездку</button>
+      <p class="hint" style="margin-top: 1rem;">Если Supabase не настроен, открой <a href="?trip=local" style="color: var(--accent);">режим без облака</a> (данные только у тебя).</p>
+    </div>
+
+    <div id="screen-trip">
+      <div class="trip-layout">
+        <div class="trip-form">
+          <div class="trip-link-wrap">
+            <label>Ссылка на поездку (отправь в чат)</label>
+            <input type="text" id="trip-url" readonly placeholder="После создания поездки здесь появится ссылка" />
+            <button type="button" class="btn btn-secondary" id="copy-link" style="margin-top: 0.5rem;">Копировать ссылку</button>
+            <p class="share-hint">Все, кто откроют ссылку, увидят общий список и смогут добавить свои даты.</p>
+          </div>
+          <label>Кто уже добавился</label>
+          <ul class="participants-list" id="participants-list"></ul>
+          <label>Добавить себя</label>
+          <input type="text" id="name" placeholder="Твоё имя" />
+          <label class="label-weekends">В какие выходные можешь?</label>
+          <div class="weekends-select-all">
+            <label class="weekend select-all-row">
+              <input type="checkbox" id="select-all-weekends" />
+              <span>Выбрать всё</span>
+            </label>
+          </div>
+          <div class="weekends" id="weekends-me"></div>
+          <button type="button" class="btn btn-primary" id="btn-add-me">Добавить меня</button>
+        </div>
+        <aside class="trip-results-wrap">
+          <h2 class="results-title">Лучшие даты</h2>
+          <div class="results" id="results"></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
