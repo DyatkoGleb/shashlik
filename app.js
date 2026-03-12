@@ -1,6 +1,9 @@
 // Настрой Supabase: создай проект на supabase.com, вставь сюда URL и anon key (Settings → API)
 const SUPABASE_URL = 'https://mtyazmihdcskgxuqobyr.supabase.co';
-const SUPABASE_ANON_KEY = '';
+const SUPABASE_ANON_KEY = ''; // anon public key (JWT, начинается с eyJ)
+
+// Ключ Яндекс.Карт: developer.tech.yandex.ru → JavaScript API и HTTP Геокодер. Без ключа карта не загрузится.
+const YANDEX_MAPS_API_KEY = '2b869f46-c097-4f90-8aa0-6ecca1cfb1cc';
 
 let supabaseClient = null;
 (function () {
@@ -160,6 +163,8 @@ function showTripScreen(participants) {
   updateTripLinkVisibility(participants.length);
   renderParticipantsList(participants);
   renderBestResults(participants);
+  initMapIfNeeded();
+  renderMapMarkersList();
 }
 
 function updateTripLinkVisibility(participantCount) {
@@ -187,6 +192,45 @@ function renderParticipantsList(participants) {
       e.preventDefault();
       await deleteParticipant(tripId, btn.getAttribute('data-id'));
       await refreshTrip();
+    });
+  });
+}
+
+function initMapIfNeeded() {
+  if (!window.YandexMap || !YANDEX_MAPS_API_KEY) return;
+  if (window._tripMapInited) return;
+  var container = document.getElementById('trip-map');
+  if (!container) return;
+  window._tripMapInited = true;
+  window.YandexMap.init('trip-map', {
+    apiKey: YANDEX_MAPS_API_KEY,
+    center: [VOLGOGRAD.lat, VOLGOGRAD.lon],
+    zoom: 10,
+    onMapClick: function (coords) {
+      window.YandexMap.addMarker(coords, {
+        balloonContent: 'Метка ' + coords[0].toFixed(5) + ', ' + coords[1].toFixed(5)
+      });
+    },
+    onMarkersChange: renderMapMarkersList
+  });
+}
+
+function renderMapMarkersList() {
+  var listEl = document.getElementById('map-markers-list');
+  if (!listEl || !window.YandexMap) return;
+  var markers = window.YandexMap.getMarkers();
+  if (markers.length === 0) {
+    listEl.innerHTML = '<li class="no-data">Нет меток. Кликни по карте выше.</li>';
+    return;
+  }
+  listEl.innerHTML = markers.map(function (m) {
+    var label = m.coords[0].toFixed(5) + ', ' + m.coords[1].toFixed(5);
+    return '<li><span class="map-marker-coords">' + escapeHtml(label) + '</span> <button type="button" class="btn-remove" data-marker-id="' + escapeHtml(m.id) + '" title="Удалить">×</button></li>';
+  }).join('');
+  listEl.querySelectorAll('.btn-remove').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      window.YandexMap.removeMarker(btn.getAttribute('data-marker-id'));
     });
   });
 }
