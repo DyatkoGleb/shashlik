@@ -169,7 +169,10 @@ async function saveParticipant(tripId, name, indices) {
 async function loadTripSheetUrl(tripId) {
   if (!supabaseClient || !tripId) return null;
   var res = await supabaseClient.from('trips').select('sheet_url').eq('id', tripId).maybeSingle();
-  return res.data && res.data.sheet_url ? res.data.sheet_url : null;
+  if (res.error) return null;
+  var url = res.data && res.data.sheet_url;
+  if (typeof url !== 'string' || !url.trim()) return null;
+  return url.trim();
 }
 
 async function saveTripSheetUrl(tripId, url) {
@@ -204,7 +207,11 @@ function showTripScreen(participants) {
   loadMarkersAndDisplay(getTripId());
   renderMapMarkersList();
   var tripId = getTripId();
-  loadTripSheetUrl(tripId).then(function (url) { updateSheetUI(url); });
+  loadTripSheetUrl(tripId).then(function (url) {
+    updateSheetUI(url);
+  }).catch(function () {
+    updateSheetUI(null);
+  });
 }
 
 function formatParticipantDates(indices) {
