@@ -181,11 +181,14 @@ async function saveTripSheetUrl(tripId, url) {
 function updateSheetUI(sheetUrl) {
   var input = document.getElementById('sheet-url-input');
   var link = document.getElementById('sheet-link');
+  var header = document.querySelector('.page-header');
+  var hasUrl = !!(sheetUrl && sheetUrl.trim());
   if (input) input.value = sheetUrl || '';
   if (link) {
     link.href = sheetUrl || '#';
-    link.classList.toggle('has-url', !!(sheetUrl && sheetUrl.trim()));
+    link.classList.toggle('has-url', hasUrl);
   }
+  if (header) header.classList.toggle('sheet-saved', hasUrl);
 }
 
 function showTripScreen(participants) {

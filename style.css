@@ -74,6 +74,10 @@ h1 {
   display: flex;
 }
 
+.page-header.trip-active.sheet-saved .sheet-url-wrap {
+  display: none;
+}
+
 .sheet-url-input {
   flex: 1;
   min-width: 120px;
@@ -114,7 +118,7 @@ h1 {
 
 .sheet-link {
   display: none;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   text-decoration: none;
   white-space: nowrap;
