@@ -22,6 +22,7 @@
 -- Таблица поездок (одна строка = одна ссылка)
 create table if not exists public.trips (
   id uuid primary key default gen_random_uuid(),
+  sheet_url text,
   created_at timestamptz default now()
 );
 
@@ -40,6 +41,7 @@ alter table public.participants enable row level security;
 
 create policy "trips read" on public.trips for select to anon using (true);
 create policy "trips insert" on public.trips for insert to anon with check (true);
+create policy "trips update" on public.trips for update to anon using (true) with check (true);
 
 create policy "participants read" on public.participants for select to anon using (true);
 create policy "participants insert" on public.participants for insert to anon with check (true);
@@ -54,6 +56,10 @@ create table if not exists public.markers (
   description text,
   created_at timestamptz default now()
 );
+
+-- Если таблица trips уже была создана без sheet_url:
+-- alter table public.trips add column if not exists sheet_url text;
+-- create policy "trips update" on public.trips for update to anon using (true) with check (true);
 
 -- Если таблица markers уже была создана без description:
 -- alter table public.markers add column if not exists description text;

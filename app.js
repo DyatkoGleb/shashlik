@@ -166,9 +166,33 @@ async function saveParticipant(tripId, name, indices) {
   await supabaseClient.from('participants').insert({ trip_id: tripId, name, weekends: indices.join(',') });
 }
 
+async function loadTripSheetUrl(tripId) {
+  if (!supabaseClient || !tripId) return null;
+  var res = await supabaseClient.from('trips').select('sheet_url').eq('id', tripId).maybeSingle();
+  return res.data && res.data.sheet_url ? res.data.sheet_url : null;
+}
+
+async function saveTripSheetUrl(tripId, url) {
+  if (!supabaseClient || !tripId) return;
+  var value = (url && (url = url.trim())) ? url : null;
+  await supabaseClient.from('trips').update({ sheet_url: value }).eq('id', tripId);
+}
+
+function updateSheetUI(sheetUrl) {
+  var input = document.getElementById('sheet-url-input');
+  var link = document.getElementById('sheet-link');
+  if (input) input.value = sheetUrl || '';
+  if (link) {
+    link.href = sheetUrl || '#';
+    link.classList.toggle('has-url', !!(sheetUrl && sheetUrl.trim()));
+  }
+}
+
 function showTripScreen(participants) {
   document.getElementById('screen-no-trip').classList.remove('visible');
   document.getElementById('screen-trip').classList.add('visible');
+  var header = document.querySelector('.page-header');
+  if (header) header.classList.add('trip-active');
   document.getElementById('trip-url').value = location.href;
   updateTripLinkVisibility(participants.length);
   renderParticipantsList(participants);
@@ -176,6 +200,8 @@ function showTripScreen(participants) {
   initMapIfNeeded();
   loadMarkersAndDisplay(getTripId());
   renderMapMarkersList();
+  var tripId = getTripId();
+  loadTripSheetUrl(tripId).then(function (url) { updateSheetUI(url); });
 }
 
 function formatParticipantDates(indices) {
@@ -201,6 +227,12 @@ function updateTripLinkVisibility(participantCount) {
 
 function renderParticipantsList(participants) {
   const ul = document.getElementById('participants-list');
+  const labelEl = document.getElementById('participants-list-label');
+  if (labelEl) {
+    var n = participants.length;
+    var unit = n === 1 ? 'штука' : (n >= 2 && n <= 4) ? 'штуки' : 'штук';
+    labelEl.textContent = 'Список крутых парней в количестве ' + n + ' ' + unit + ':';
+  }
   const tripId = getTripId();
   updateTripLinkVisibility(participants.length);
   if (participants.length === 0) {
@@ -467,6 +499,20 @@ document.getElementById('copy-link').addEventListener('click', () => {
   });
 });
 
+document.getElementById('sheet-save-btn').addEventListener('click', async function () {
+  var tripId = getTripId();
+  if (!tripId) { alert('Сначала открой или создай поездку'); return; }
+  var input = document.getElementById('sheet-url-input');
+  var url = input ? input.value.trim() : '';
+  await saveTripSheetUrl(tripId, url);
+  updateSheetUI(url || null);
+  var btn = document.getElementById('sheet-save-btn');
+  var old = btn.textContent;
+  btn.textContent = '✓';
+  btn.disabled = true;
+  setTimeout(function () { btn.disabled = false; }, 800);
+});
+
 (async function init() {
   renderWeekends('weekends-me');
   const tripId = getTripId();
@@ -476,5 +522,7 @@ document.getElementById('copy-link').addEventListener('click', () => {
   } else {
     document.getElementById('screen-trip').classList.remove('visible');
     document.getElementById('screen-no-trip').classList.add('visible');
+    var header = document.querySelector('.page-header');
+    if (header) header.classList.remove('trip-active');
   }
 })();
