@@ -62,17 +62,16 @@ h1 {
   margin: 0;
 }
 
-.page-header .sheet-url-input,
-.page-header .btn-sheet-save {
+.sheet-url-wrap {
   display: none;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
 }
 
-.page-header.trip-active .sheet-url-input {
-  display: block;
-}
-
-.page-header.trip-active .btn-sheet-save {
-  display: inline-flex;
+.page-header.trip-active .sheet-url-wrap {
+  display: flex;
 }
 
 .sheet-url-input {
